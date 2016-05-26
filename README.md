@@ -1,4 +1,4 @@
-# juCi++
+# juCi++ [![Build Status](https://travis-ci.org/cppit/jucipp.svg?branch=master)](https://travis-ci.org/cppit/jucipp)
 ###### a lightweight, platform independent C++-IDE with support for C++11, C++14, and experimental C++17 features depending on libclang version.
 <!--<img src="https://github.com/cppit/jucipp/blob/master/docs/images/screenshot3.png"/>-->
 ## About
@@ -13,14 +13,14 @@ towards libclang with speed and ease of use in mind.
 * C++ warnings and errors on the fly
 * C++ Fix-its
 * Debug integration through lldb
-* Automated CMake processing
+* Automated CMake processing, including support for external libraries
 * Fast C++ autocompletion
 * Keyword and buffer autocompletion for other file types
 * Tooltips showing type information and doxygen documentation (C++)
 * Rename refactoring across files (C++)
 * Highlighting of similar types (C++)
 * Automated documentation search (C++)
-* Go to methods and usages (C++)
+* Go to declaration, implementation, methods and usages (C++)
 * Spell checking depending on file context
 * Run shell commands within JuCi++
 * Regex search and replace
@@ -39,9 +39,6 @@ See [enhancements](https://github.com/cppit/jucipp/labels/enhancement) for plann
 
 ## Dependencies
 * boost-filesystem
-* boost-log
-* boost-thread
-* boost-system
 * boost-regex
 * gtkmm-3.0
 * gtksourceviewmm-3.0
@@ -52,4 +49,7 @@ See [enhancements](https://github.com/cppit/jucipp/labels/enhancement) for plann
 * [tiny-process-library](http://github.com/eidheim/tiny-process-library/) (downloaded directly with git --recursive, no need to install)
 
 ## Installation
-See [installation guide](http://github.com/cppit/jucipp/blob/master/docs/install.md).
+See [installation guide](docs/install.md).
+
+## Documentation
+See [how to build the API doc](docs/api.md).

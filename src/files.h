@@ -2,7 +2,7 @@
 #define JUCI_FILES_H_
 #include <string>
 
-#define JUCI_VERSION "1.1.2"
+#define JUCI_VERSION "1.1.3-3"
 
 const std::string configjson =
 "{\n"
@@ -13,8 +13,8 @@ const std::string configjson =
 "    },\n"
 "    \"gtk_theme\": {\n"
 "        \"name_comment\": \"Use \\\"\\\" for default theme, At least these two exist on all systems: Adwaita, Raleigh\",\n"
-"        \"name\": \"Adwaita\",\n"
-"        \"variant_comment\": \"Use \\\"\\\" for default variant, and \\\"dark\\\" for dark theme variant\",\n"
+"        \"name\": \"\",\n"
+"        \"variant_comment\": \"Use \\\"\\\" for default variant, and \\\"dark\\\" for dark theme variant. Note that not all themes support dark variant, but for instance Adwaita does\",\n"
 "        \"variant\": \"\"\n"
 "    },\n"
 "    \"terminal\": {\n"
@@ -37,6 +37,8 @@ const std::string configjson =
 #endif
 "        \"cleanup_whitespace_characters_comment\": \"Remove trailing whitespace characters on save, and add trailing newline if missing\",\n"
 "        \"cleanup_whitespace_characters\": false,\n"
+"        \"show_whitespace_characters_comment\": \"Determines what kind of whitespaces should be drawn. Use comma-separated list of: space, tab, newline, nbsp, leading, text, trailing or all\",\n"
+"        \"show_whitespace_characters\": \"\",\n"
 "        \"show_map\": true,\n"
 "        \"map_font_size\": \"1\",\n"
 "        \"spellcheck_language_comment\": \"Use \\\"\\\" to set language from your locale settings\",\n"
@@ -75,6 +77,7 @@ const std::string configjson =
 "        \"open_folder\": \"<primary><shift>o\",\n"
 "        \"save\": \"<primary>s\",\n"
 "        \"save_as\": \"<primary><shift>s\",\n"
+"        \"print\": \"<primary>p\",\n"
 "        \"edit_undo\": \"<primary>z\",\n"
 "        \"edit_redo\": \"<primary><shift>z\",\n"
 "        \"edit_cut\": \"<primary>x\",\n"
@@ -91,6 +94,7 @@ const std::string configjson =
 "        \"source_center_cursor\": \"<primary>l\",\n"
 "        \"source_find_documentation\": \"<primary><shift>d\",\n"
 "        \"source_goto_declaration\": \"<primary>d\",\n"
+"        \"source_goto_implementation\": \"<primary>i\",\n"
 "        \"source_goto_usage\": \"<primary>u\",\n"
 "        \"source_goto_method\": \"<primary>m\",\n"
 "        \"source_rename\": \"<primary>r\",\n"

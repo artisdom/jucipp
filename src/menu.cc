@@ -101,6 +101,13 @@ Menu::Menu() : plugin_menu(nullptr) {
              +accels["save_as"]+ //For Ubuntu...
   "        </item>"
   "      </section>"
+  "      <section>"
+  "        <item>"
+  "          <attribute name='label' translatable='yes'>_Print</attribute>"
+  "          <attribute name='action'>app.print</attribute>"
+             +accels["print"]+ //For Ubuntu...
+  "        </item>"
+  "      </section>"
   "    </submenu>"
   ""
   "    <submenu>"
@@ -204,6 +211,11 @@ Menu::Menu() : plugin_menu(nullptr) {
   "          <attribute name='label' translatable='yes'>_Go to Declaration</attribute>"
   "          <attribute name='action'>app.source_goto_declaration</attribute>"
              +accels["source_goto_declaration"]+ //For Ubuntu...
+  "        </item>"
+  "        <item>"
+  "          <attribute name='label' translatable='yes'>_Go to Implementation</attribute>"
+  "          <attribute name='action'>app.source_goto_implementation</attribute>"
+             +accels["source_goto_implementation"]+ //For Ubuntu...
   "        </item>"
   "        <item>"
   "          <attribute name='label' translatable='yes'>_Go to Usage</attribute>"

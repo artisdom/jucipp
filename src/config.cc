@@ -1,5 +1,4 @@
 #include "config.h"
-#include "logging.h"
 #include <exception>
 #include "files.h"
 #include <iostream>
@@ -190,6 +189,7 @@ void Config::get_source() {
   source.font=source_json.get<std::string>("font");
 
   source.cleanup_whitespace_characters=source_json.get<bool>("cleanup_whitespace_characters");
+  source.show_whitespace_characters=source_json.get<std::string>("show_whitespace_characters");
 
   source.show_map = source_json.get<bool>("show_map");
   source.map_font_size = source_json.get<std::string>("map_font_size");
@@ -205,8 +205,12 @@ void Config::get_source() {
   source.highlight_current_line = source_json.get<bool>("highlight_current_line");
   source.show_line_numbers = source_json.get<bool>("show_line_numbers");
 
-  for (auto &i : source_json.get_child("clang_types"))
-    source.clang_types[i.first] = i.second.get_value<std::string>();
+  for (auto &i : source_json.get_child("clang_types")) {
+    try {
+      source.clang_types[std::stoi(i.first)] = i.second.get_value<std::string>();
+    }
+    catch(const std::exception &) {}
+  }
   
   source.clang_format_style = source_json.get<std::string>("clang_format_style");
   
