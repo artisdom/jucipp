@@ -47,11 +47,11 @@ Python::Interpreter::Interpreter(){
           return pyobject_from_gobj(view->gobj());
         return pybind11::module(Py_None,false);
       })
-      .def("get_file_path",[](){
+      .def("get_file_path",[]() -> std::string {
         auto view=Notebook::get().get_current_view();
         if(view)
           return view->file_path.string();
-        return std::string();
+        return "";
       });
     api
     .def("get_gio_plugin_menu",[](){
