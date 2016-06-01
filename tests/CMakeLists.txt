@@ -1,4 +1,4 @@
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-access-control -DJUCI_TESTS_PATH=\\\"${CMAKE_CURRENT_SOURCE_DIR}\\\"")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-access-control -DJUCI_BUILD_PATH=\\\"${CMAKE_BINARY_DIR}\\\" -DJUCI_TESTS_PATH=\\\"${CMAKE_CURRENT_SOURCE_DIR}\\\"")
 
 set(global_includes
    ${Boost_INCLUDE_DIRS}
@@ -33,6 +33,11 @@ add_library(stubs OBJECT ${stub_files})
 
 include_directories(${global_includes})
 
+add_executable(process_test process_test.cc
+               $<TARGET_OBJECTS:project_shared> $<TARGET_OBJECTS:stubs>)
+target_link_libraries(process_test ${global_libraries})
+add_test(process_test process_test)
+
 add_executable(cmake_build_test cmake_build_test.cc
                $<TARGET_OBJECTS:project_shared> $<TARGET_OBJECTS:stubs>)
 target_link_libraries(cmake_build_test ${global_libraries})
@@ -47,3 +52,11 @@ add_executable(source_clang_test source_clang_test.cc
                $<TARGET_OBJECTS:project_shared> $<TARGET_OBJECTS:stubs>)
 target_link_libraries(source_clang_test ${global_libraries})
 add_test(source_clang_test source_clang_test)
+
+if(LIBLLDB_FOUND)
+  add_executable(lldb_test lldb_test.cc
+                 $<TARGET_OBJECTS:project_shared> $<TARGET_OBJECTS:stubs>)
+  target_link_libraries(lldb_test ${global_libraries})
+  add_test(lldb_test lldb_test)
+  add_subdirectory("lldb_test_files")
+endif()

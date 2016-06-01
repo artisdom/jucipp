@@ -44,6 +44,7 @@ set(global_libraries
 set(project_files
     config.cc
     dialogs.cc
+    dialogs_unix.cc
     directories.cc
     entrybox.cc
     info.cc
@@ -56,8 +57,6 @@ set(project_files
     terminal.cc
     tooltips.cc
     window.cc
-
-    ../tiny-process-library/process.cpp
 )
 
 #Files used both in ../src and ../tests
@@ -83,6 +82,8 @@ set(project_shared_files
     ../libclangmm/src/Tokens.cc
     ../libclangmm/src/TranslationUnit.cc
     ../libclangmm/src/Utility.cc
+    
+    ../tiny-process-library/process.cpp
 )
 
 if(LIBLLDB_FOUND)
@@ -90,9 +91,9 @@ if(LIBLLDB_FOUND)
 endif()
 
 if(MSYS)
-  list(APPEND project_files dialogs_unix.cc ../tiny-process-library/process_win.cpp)
+  list(APPEND project_shared_files ../tiny-process-library/process_win.cpp)
 else()
-  list(APPEND project_files dialogs_unix.cc ../tiny-process-library/process_unix.cpp)
+  list(APPEND project_shared_files ../tiny-process-library/process_unix.cpp)
 endif()
 
 include_directories(${global_includes})
