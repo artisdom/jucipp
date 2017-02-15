@@ -243,7 +243,7 @@ const std::string juci_light_style = R"RAW(<?xml version="1.0" encoding="UTF-8"?
 
   <!-- Language specifics used by clang-parser in default config -->
   <style name="def:string"                  foreground="red"/>
-  <style name="def:comment"                 foreground="gray"/>
+  <style name="def:comment"                 foreground="gray" italic="true"/>
   <style name="def:statement"               foreground="blue"/>
   <style name="def:type"                    foreground="blue"/>
   <style name="def:function"                foreground="dark-blue"/>
@@ -307,7 +307,7 @@ const std::string juci_dark_style = R"RAW(<?xml version="1.0" encoding="UTF-8"?>
 
   <!-- Language specifics used by clang-parser in default config -->
   <style name="def:string"                  foreground="red"/>
-  <style name="def:comment"                 foreground="gray"/>
+  <style name="def:comment"                 foreground="gray" italic="true"/>
   <style name="def:statement"               foreground="blue"/>
   <style name="def:type"                    foreground="blue"/>
   <style name="def:function"                foreground="light-blue"/>
@@ -372,7 +372,7 @@ const std::string juci_dark_blue_style = R"RAW(<?xml version="1.0" encoding="UTF
 
   <!-- Language specifics used by clang-parser in default config -->
   <style name="def:string"                  foreground="light-yellow"/>
-  <style name="def:comment"                 foreground="gray"/>
+  <style name="def:comment"                 foreground="gray" italic="true"/>
   <style name="def:statement"               foreground="blue"/>
   <style name="def:type"                    foreground="blue"/>
   <style name="def:function"                foreground="light-blue"/>

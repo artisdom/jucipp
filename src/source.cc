@@ -65,7 +65,7 @@ std::string Source::FixIt::string(Glib::RefPtr<Gtk::TextBuffer> buffer) {
   unsigned first_line_offset=iter.get_line_offset()+1;
   iter=buffer->get_iter_at_line_index(offsets.second.line, offsets.second.index);
   unsigned second_line_offset=iter.get_line_offset()+1;
-  
+
   std::string text;
   if(type==Type::INSERT) {
     text+="Insert "+source+" at ";
@@ -82,7 +82,7 @@ std::string Source::FixIt::string(Glib::RefPtr<Gtk::TextBuffer> buffer) {
     text+=std::to_string(offsets.first.line+1)+":"+std::to_string(first_line_offset)+" - ";
     text+=std::to_string(offsets.second.line+1)+":"+std::to_string(second_line_offset);
   }
-  
+
   return text;
 }
 
@@ -95,9 +95,9 @@ const std::regex Source::View::no_bracket_no_para_statement_regex("^([ \\t]*)(el
 
 Source::View::View(const boost::filesystem::path &file_path, Glib::RefPtr<Gsv::Language> language): Gsv::View(), SpellCheckView(), DiffView(file_path), language(language), status_diagnostics(0, 0, 0) {
   load();
-  
-  get_buffer()->place_cursor(get_buffer()->get_iter_at_offset(0)); 
-  
+
+  get_buffer()->place_cursor(get_buffer()->get_iter_at_offset(0));
+
   search_settings = gtk_source_search_settings_new();
   gtk_source_search_settings_set_wrap_around(search_settings, true);
   search_context = gtk_source_search_context_new(get_source_buffer()->gobj(), search_settings);
@@ -107,18 +107,18 @@ Source::View::View(const boost::filesystem::path &file_path, Glib::RefPtr<Gsv::L
   //TODO: We can drop this, only work on newer versions of gtksourceview.
   //search_match_style=(GtkSourceStyle*)g_object_new(GTK_SOURCE_TYPE_STYLE, "background-set", 1, "background", "#00FF00", nullptr);
   //gtk_source_search_context_set_match_style(search_context, search_match_style);
-  
+
   //TODO: either use lambda if possible or create a gtkmm wrapper around search_context (including search_settings):
   //TODO: (gtkmm's Gtk::Object has connect_property_changed, so subclassing this might be an idea)
   g_signal_connect(search_context, "notify::occurrences-count", G_CALLBACK(search_occurrences_updated), this);
-  
+
   get_buffer()->create_tag("def:warning");
   get_buffer()->create_tag("def:warning_underline");
   get_buffer()->create_tag("def:error");
   get_buffer()->create_tag("def:error_underline");
   get_buffer()->create_tag("def:note_background");
   get_buffer()->create_tag("def:note");
-  
+
   auto mark_attr_debug_breakpoint=Gsv::MarkAttributes::create();
   Gdk::RGBA rgba;
   rgba.set_red(1.0);
@@ -139,12 +139,12 @@ Source::View::View(const boost::filesystem::path &file_path, Glib::RefPtr<Gsv::L
   rgba.set_blue(0.75);
   mark_attr_debug_breakpoint_and_stop->set_background(rgba);
   set_mark_attributes("debug_breakpoint_and_stop", mark_attr_debug_breakpoint_and_stop, 102);
-  
+
   get_buffer()->signal_changed().connect([this](){
     if(update_status_location)
       update_status_location(this);
   });
-  
+
   signal_realize().connect([this] {
     auto gutter=get_gutter(Gtk::TextWindowType::TEXT_WINDOW_LEFT);
     auto renderer=gutter->get_renderer_at_pos(15, 0);
@@ -156,9 +156,9 @@ Source::View::View(const boost::filesystem::path &file_path, Glib::RefPtr<Gsv::L
       });
     }
   });
-  
+
   set_tooltip_and_dialog_events();
-  
+
   if(language && (language->get_id()=="chdr" || language->get_id()=="cpphdr" || language->get_id()=="c" ||
                   language->get_id()=="cpp" || language->get_id()=="objc" || language->get_id()=="java" ||
                   language->get_id()=="js" || language->get_id()=="ts" || language->get_id()=="proto" ||
@@ -166,16 +166,16 @@ Source::View::View(const boost::filesystem::path &file_path, Glib::RefPtr<Gsv::L
                   language->get_id()=="php" || language->get_id()=="rust" || language->get_id()=="swift" ||
                   language->get_id()=="go" || language->get_id()=="scala" || language->get_id()=="opencl")) {
     is_bracket_language=true;
-    
+
     format_style=[this]() {
       auto command=Config::get().terminal.clang_format_command+" -output-replacements-xml -assume-filename="+filesystem::escape_argument(this->file_path.string());
-      
+
       if(get_buffer()->get_has_selection()) {
         Gtk::TextIter start, end;
         get_buffer()->get_selection_bounds(start, end);
         command+=" -lines="+std::to_string(start.get_line()+1)+':'+std::to_string(end.get_line()+1);
       }
-      
+
       bool use_style_file=false;
       auto style_file_search_path=this->file_path.parent_path();
       while(true) {
@@ -187,7 +187,7 @@ Source::View::View(const boost::filesystem::path &file_path, Glib::RefPtr<Gsv::L
           break;
         style_file_search_path=style_file_search_path.parent_path();
       }
-      
+
       if(use_style_file)
         command+=" -style=file";
       else {
@@ -208,13 +208,13 @@ Source::View::View(const boost::filesystem::path &file_path, Glib::RefPtr<Gsv::L
           command+=", "+Config::get().source.clang_format_style;
         command+="}\"";
       }
-      
+
       std::stringstream stdin_stream(get_buffer()->get_text()), stdout_stream;
-      
+
       auto exit_status=Terminal::get().process(stdin_stream, stdout_stream, command, this->file_path.parent_path());
       if(exit_status==0) {
         // The following code is complex due to clang-format returning offsets in byte offsets instead of char offsets
-        
+
         // Create bytes_in_lines cache to significantly speed up the processing of finding iterators from byte offsets
         std::vector<size_t> bytes_in_lines;
         auto line_count=get_buffer()->get_line_count();
@@ -222,7 +222,7 @@ Source::View::View(const boost::filesystem::path &file_path, Glib::RefPtr<Gsv::L
           auto iter=get_buffer()->get_iter_at_line(line_nr);
           bytes_in_lines.emplace_back(iter.get_bytes_in_line());
         }
-        
+
         get_buffer()->begin_user_action();
         try {
           boost::property_tree::ptree pt;
@@ -233,7 +233,7 @@ Source::View::View(const boost::filesystem::path &file_path, Glib::RefPtr<Gsv::L
               auto offset=it->second.get<size_t>("<xmlattr>.offset");
               auto length=it->second.get<size_t>("<xmlattr>.length");
               auto replacement_str=it->second.get<std::string>("");
-              
+
               size_t bytes=0;
               for(size_t c=0;c<bytes_in_lines.size();++c) {
                 auto previous_bytes=bytes;
@@ -241,7 +241,7 @@ Source::View::View(const boost::filesystem::path &file_path, Glib::RefPtr<Gsv::L
                 if(offset<bytes || (c==bytes_in_lines.size()-1 && offset==bytes)) {
                   std::pair<size_t, size_t> line_index(c, offset-previous_bytes);
                   auto start=get_buffer()->get_iter_at_line_index(line_index.first, line_index.second);
-                  
+
                   if(length>0) {
                     auto offset_end=offset+length;
                     size_t bytes=0;
@@ -270,7 +270,7 @@ Source::View::View(const boost::filesystem::path &file_path, Glib::RefPtr<Gsv::L
       }
     };
   }
-  
+
 #ifndef __APPLE__
   set_tab_width(4); //Visual size of a \t hardcoded to be equal to visual size of 4 spaces. Buggy on OS X
 #endif
@@ -286,13 +286,13 @@ Source::View::View(const boost::filesystem::path &file_path, Glib::RefPtr<Gsv::L
         else
           tab_str="<tab>";
       }
-      
+
       tab_char=tab_char_and_size.first;
       tab_size=tab_char_and_size.second;
     }
   }
   set_tab_char_and_size(tab_char, tab_size);
-  
+
   std::shared_ptr<std::string> comment_characters;
   if(is_bracket_language)
     comment_characters=std::make_shared<std::string>("//");
@@ -412,12 +412,12 @@ bool Source::View::load() {
     }
   }
   get_source_buffer()->end_not_undoable_action();
-  
+
   boost::system::error_code ec;
   last_write_time=boost::filesystem::last_write_time(file_path, ec);
   if(ec)
     last_write_time=static_cast<std::time_t>(-1);
-  
+
   return status;
 }
 
@@ -435,7 +435,7 @@ void Source::View::rename(const boost::filesystem::path &path) {
 void Source::View::set_tab_char_and_size(char tab_char, unsigned tab_size) {
   this->tab_char=tab_char;
   this->tab_size=tab_size;
-      
+
   tab.clear();
   for(unsigned c=0;c<tab_size;c++)
     tab+=tab_char;
@@ -466,7 +466,7 @@ void Source::View::cleanup_whitespace_characters() {
 
 Gsv::DrawSpacesFlags Source::View::parse_show_whitespace_characters(const std::string &text) {
   namespace qi = boost::spirit::qi;
-  
+
   qi::symbols<char, Gsv::DrawSpacesFlags> options;
   options.add
     ("space",    Gsv::DRAW_SPACES_SPACE)
@@ -479,10 +479,10 @@ Gsv::DrawSpacesFlags Source::View::parse_show_whitespace_characters(const std::s
     ("all",      Gsv::DRAW_SPACES_ALL);
 
   std::set<Gsv::DrawSpacesFlags> out;
-  
+
   // parse comma-separated list of options
   qi::phrase_parse(text.begin(), text.end(), options % ',', qi::space, out);
-  
+
   return out.count(Gsv::DRAW_SPACES_ALL)>0 ?
     Gsv::DRAW_SPACES_ALL :
     static_cast<Gsv::DrawSpacesFlags>(std::accumulate(out.begin(), out.end(), 0));
@@ -493,10 +493,10 @@ bool Source::View::save(const std::vector<Source::View*> &views) {
     return false;
   if(Config::get().source.cleanup_whitespace_characters)
     cleanup_whitespace_characters();
-  
+
   if(Config::get().source.format_style_on_save && format_style)
     format_style();
-  
+
   if(filesystem::write(file_path, get_buffer())) {
     boost::system::error_code ec;
     last_write_time=boost::filesystem::last_write_time(file_path, ec);
@@ -517,7 +517,7 @@ void Source::View::replace_text(const std::string &text) {
   auto iter=get_buffer()->get_insert()->get_iter();
   auto cursor_line_nr=iter.get_line();
   auto cursor_line_offset=iter.get_line_offset();
-  
+
   size_t start_line_index=0;
   int line_nr=0;
   for(size_t c=0;c<text.size();++c) {
@@ -536,7 +536,7 @@ void Source::View::replace_text(const std::string &text) {
       if(line_nr<get_buffer()->get_line_count()) {
         auto start_iter=get_buffer()->get_iter_at_line(line_nr);
         auto end_iter=get_iter_at_line_end(line_nr);
-        
+
         if(get_buffer()->get_text(start_iter, end_iter)!=line) {
           get_buffer()->erase(start_iter, end_iter);
           iter=get_buffer()->get_iter_at_line(line_nr);
@@ -547,47 +547,47 @@ void Source::View::replace_text(const std::string &text) {
         iter=get_buffer()->end();
         get_buffer()->insert(iter, '\n'+line);
       }
-      
+
       ++line_nr;
       start_line_index=c+1;
     }
   }
-  
+
   if(text[text.size()-1]=='\n') {
     Gtk::TextIter iter;
     get_buffer()->insert(get_iter_at_line_end(line_nr-1), "\n");
     ++line_nr;
   }
-  
+
   if(line_nr<get_buffer()->get_line_count()) {
     auto iter=get_iter_at_line_end(line_nr-1);
     get_buffer()->erase(iter, get_buffer()->end());
   }
-  
+
   get_buffer()->end_user_action();
-  
+
   place_cursor_at_line_offset(cursor_line_nr, cursor_line_offset);
 }
 
 void Source::View::configure() {
   SpellCheckView::configure();
   DiffView::configure();
-  
+
   //TODO: Move this to notebook? Might take up too much memory doing this for every tab.
   auto style_scheme_manager=Gsv::StyleSchemeManager::get_default();
   style_scheme_manager->prepend_search_path((Config::get().home_juci_path/"styles").string());
-  
+
   if(Config::get().source.style.size()>0) {
     auto scheme = style_scheme_manager->get_scheme(Config::get().source.style);
-  
+
     if(scheme)
       get_source_buffer()->set_style_scheme(scheme);
     else
       Terminal::get().print("Error: Could not find gtksourceview style: "+Config::get().source.style+'\n', true);
   }
-  
+
   set_draw_spaces(parse_show_whitespace_characters(Config::get().source.show_whitespace_characters));
-  
+
   if(Config::get().source.wrap_lines)
     set_wrap_mode(Gtk::WrapMode::WRAP_CHAR);
   else
@@ -602,7 +602,7 @@ void Source::View::configure() {
   else
     gtk_source_view_set_background_pattern(this->gobj(), GTK_SOURCE_BACKGROUND_PATTERN_TYPE_NONE);
 #endif
-  
+
   //Create tags for diagnostic warnings and errors:
   auto scheme = get_source_buffer()->get_style_scheme();
   auto tag_table=get_buffer()->get_tag_table();
@@ -617,7 +617,7 @@ void Source::View::configure() {
     }
     else if(style->property_background_set())
       warning_property=style->property_background().get_value();
-  
+
     diagnostic_tag_underline->property_underline()=Pango::Underline::UNDERLINE_ERROR;
     auto tag_class=G_OBJECT_GET_CLASS(diagnostic_tag_underline->gobj()); //For older GTK+ 3 versions:
     auto param_spec=g_object_class_find_property(tag_class, "underline-rgba");
@@ -636,7 +636,7 @@ void Source::View::configure() {
     }
     else if(style->property_background_set())
       error_property=style->property_background().get_value();
-    
+
     diagnostic_tag_underline->property_underline()=Pango::Underline::UNDERLINE_ERROR;
 #if GTK_VERSION_GE(3, 16)
     diagnostic_tag_underline->set_property("underline-rgba", Gdk::RGBA(error_property));
@@ -654,7 +654,7 @@ void Source::View::configure() {
   if(style->property_foreground_set()) {
     note_tag->property_foreground()=style->property_foreground();
   }
-  
+
   if(Config::get().menu.keys["source_show_completion"].empty()) {
     get_completion()->unblock_interactive();
     interactive_completion=true;
@@ -669,7 +669,7 @@ void Source::View::set_tooltip_and_dialog_events() {
   get_buffer()->signal_changed().connect([this] {
     hide_tooltips();
   });
-  
+
   signal_motion_notify_event().connect([this](GdkEventMotion* event) {
     if(on_motion_last_x!=event->x || on_motion_last_y!=event->y) {
       delayed_tooltips_connection.disconnect();
@@ -693,11 +693,11 @@ void Source::View::set_tooltip_and_dialog_events() {
     on_motion_last_y=event->y;
     return false;
   });
-  
+
   get_buffer()->signal_mark_set().connect([this](const Gtk::TextBuffer::iterator& iterator, const Glib::RefPtr<Gtk::TextBuffer::Mark>& mark) {
     if(get_buffer()->get_has_selection() && mark->get_name()=="selection_bound")
       delayed_tooltips_connection.disconnect();
-    
+
     if(mark->get_name()=="insert") {
       hide_tooltips();
       delayed_tooltips_connection=Glib::signal_timeout().connect([this]() {
@@ -715,12 +715,12 @@ void Source::View::set_tooltip_and_dialog_events() {
         }
         return false;
       }, 500);
-      
+
       if(SelectionDialog::get())
         SelectionDialog::get()->hide();
       if(CompletionDialog::get())
         CompletionDialog::get()->hide();
-      
+
       if(update_status_location)
         update_status_location(this);
     }
@@ -731,12 +731,12 @@ void Source::View::set_tooltip_and_dialog_events() {
     hide_dialogs();
     return false;
   });
-  
+
   signal_focus_out_event().connect([this](GdkEventFocus* event) {
     hide_tooltips();
     return false;
   });
-  
+
   signal_leave_notify_event().connect([this](GdkEventCrossing*) {
     delayed_tooltips_connection.disconnect();
     return false;
@@ -752,7 +752,7 @@ void Source::View::search_occurrences_updated(GtkWidget* widget, GParamSpec* pro
 Source::View::~View() {
   g_clear_object(&search_context);
   g_clear_object(&search_settings);
-  
+
   delayed_tooltips_connection.disconnect();
   renderer_activate_connection.disconnect();
 }
@@ -813,7 +813,7 @@ void Source::View::replace_forward(const std::string &replacement) {
 #else
     gtk_source_search_context_replace(search_context, match_start.gobj(), match_end.gobj(), replacement.c_str(), replacement.size(), nullptr);
 #endif
-    
+
     Glib::ustring replacement_ustring=replacement;
     get_buffer()->select_range(get_buffer()->get_iter_at_offset(offset), get_buffer()->get_iter_at_offset(offset+replacement_ustring.size()));
     scroll_to(get_buffer()->get_insert());
@@ -849,7 +849,7 @@ void Source::View::replace_all(const std::string &replacement) {
 
 void Source::View::paste() {
   std::string text=Gtk::Clipboard::get()->wait_for_text();
-  
+
   //Replace carriage returns (which leads to crash) with newlines
   for(size_t c=0;c<text.size();c++) {
     if(text[c]=='\r') {
@@ -859,7 +859,7 @@ void Source::View::paste() {
         text.replace(c, 1, "\n");
     }
   }
-  
+
   //Exception for when pasted text is only whitespaces
   bool only_whitespaces=true;
   for(auto &chr: text) {
@@ -874,14 +874,14 @@ void Source::View::paste() {
     scroll_to_cursor_delayed(this, false, false);
     return;
   }
-  
+
   get_buffer()->begin_user_action();
   if(get_buffer()->get_has_selection()) {
     Gtk::TextIter start, end;
     get_buffer()->get_selection_bounds(start, end);
     get_buffer()->erase(start, end);
   }
-  auto line=get_line_before(); 
+  auto line=get_line_before();
   std::string prefix_tabs;
   auto tabs_end_iter=get_tabs_end_iter();
   prefix_tabs=get_line_before(tabs_end_iter);
@@ -955,7 +955,7 @@ void Source::View::paste() {
       if(!(first_paste_line && !first_paste_line_has_tabs) && line_tabs<paste_line_tabs) {
         tabs=line_tabs;
       }
-      
+
       if(first_paste_line) {
         if(first_paste_line_has_tabs)
           get_buffer()->insert_at_cursor(text.substr(start_line+tabs, end_line-start_line-tabs));
@@ -1069,7 +1069,7 @@ bool Source::View::find_open_non_curly_bracket_backward(Gtk::TextIter iter, Gtk:
   long para_count=0;
   long square_count=0;
   long curly_count=0;
-  
+
   do {
     if(*iter=='(' && is_code_iter(iter))
       para_count++;
@@ -1083,10 +1083,10 @@ bool Source::View::find_open_non_curly_bracket_backward(Gtk::TextIter iter, Gtk:
       curly_count++;
     else if(*iter=='}' && is_code_iter(iter))
       curly_count--;
-    
+
     if(curly_count>0)
       break;
-    
+
     if(para_count>0 || square_count>0) {
       found_iter=iter;
       return true;
@@ -1099,7 +1099,7 @@ Gtk::TextIter Source::View::find_start_of_sentence(Gtk::TextIter iter) {
   int para_count=0;
   int square_count=0;
   long curly_count=0;
-  
+
   do {
     if(*iter=='(' && is_code_iter(iter))
       para_count++;
@@ -1113,10 +1113,10 @@ Gtk::TextIter Source::View::find_start_of_sentence(Gtk::TextIter iter) {
       curly_count++;
     else if(*iter=='}' && is_code_iter(iter))
       curly_count--;
-    
+
     if(curly_count>0)
       break;
-    
+
     if(iter.starts_line() && para_count==0 && square_count==0) {
       //Handle : and , on previous line
       auto previous_iter=iter;
@@ -1137,13 +1137,13 @@ Gtk::TextIter Source::View::find_start_of_sentence(Gtk::TextIter iter) {
       }
     }
   } while(iter.backward_char());
-  
+
   return iter;
 }
 
 bool Source::View::find_open_curly_bracket_backward(Gtk::TextIter iter, Gtk::TextIter &found_iter) {
   long count=0;
-  
+
   do {
     if(*iter=='{') {
       if(count==0 && is_code_iter(iter)) {
@@ -1160,7 +1160,7 @@ bool Source::View::find_open_curly_bracket_backward(Gtk::TextIter iter, Gtk::Tex
 
 bool Source::View::find_close_curly_bracket_forward(Gtk::TextIter iter, Gtk::TextIter &found_iter) {
   long count=0;
-  
+
   do {
     if(*iter=='}' && is_code_iter(iter)) {
       if(count==0) {
@@ -1185,7 +1185,7 @@ long Source::View::symbol_count(Gtk::TextIter iter, unsigned int positive_char, 
   bool check_if_next_iter_is_code_iter=false;
   if(positive_char=='\'' || negative_char=='\'' || positive_char=='"' || negative_char=='"')
     check_if_next_iter_is_code_iter=true;
-  
+
   Gtk::TextIter previous_iter;
   do {
     if(*iter==positive_char && is_code_iter(iter))
@@ -1205,16 +1205,16 @@ long Source::View::symbol_count(Gtk::TextIter iter, unsigned int positive_char, 
           symbol_count--;
       }
     }
-    
+
     if(break_on_curly && curly_count>0)
       break;
   } while(iter.backward_char());
-  
+
   iter=iter_stored;
   if(!iter.forward_char()) {
     return symbol_count;
   }
-  
+
   curly_count=0;
   do {
     if(*iter==positive_char && is_code_iter(iter))
@@ -1234,11 +1234,11 @@ long Source::View::symbol_count(Gtk::TextIter iter, unsigned int positive_char, 
           symbol_count--;
       }
     }
-    
+
     if(break_on_curly && curly_count<0)
       break;
   } while(iter.forward_char());
-  
+
   return symbol_count;
 }
 
@@ -1246,10 +1246,10 @@ bool Source::View::is_templated_function(Gtk::TextIter iter, Gtk::TextIter &pare
   auto iter_stored=iter;
   long bracket_count=0;
   long curly_count=0;
-  
+
   if(!(iter.backward_char() && *iter=='>' && *iter_stored=='('))
     return false;
-  
+
   do {
     if(*iter=='<' && is_code_iter(iter))
       bracket_count++;
@@ -1259,17 +1259,17 @@ bool Source::View::is_templated_function(Gtk::TextIter iter, Gtk::TextIter &pare
       curly_count++;
     else if(*iter=='}' && is_code_iter(iter))
       curly_count--;
-    
+
     if(bracket_count==0)
       break;
-    
+
     if(curly_count>0)
       break;
   } while(iter.backward_char());
-  
+
   if(bracket_count!=0)
     return false;
-  
+
   iter=iter_stored;
   bracket_count=0;
   curly_count=0;
@@ -1282,23 +1282,23 @@ bool Source::View::is_templated_function(Gtk::TextIter iter, Gtk::TextIter &pare
       curly_count++;
     else if(*iter=='}' && is_code_iter(iter))
       curly_count--;
-    
+
     if(bracket_count==0) {
       parenthesis_end_iter=iter;
       return true;
     }
-    
+
     if(curly_count<0)
       return false;
   } while(iter.forward_char());
-  
+
   return false;
 }
 
 std::string Source::View::get_token(Gtk::TextIter iter) {
   auto start=iter;
   auto end=iter;
-  
+
   while((*iter>='A' && *iter<='Z') || (*iter>='a' && *iter<='z') || (*iter>='0' && *iter<='9') || *iter=='_') {
     start=iter;
     if(!iter.backward_char())
@@ -1308,7 +1308,7 @@ std::string Source::View::get_token(Gtk::TextIter iter) {
     if(!end.forward_char())
       break;
   }
-  
+
   return get_buffer()->get_text(start, end);
 }
 
@@ -1340,11 +1340,11 @@ bool Source::View::on_key_press_event(GdkEventKey* key) {
     if(CompletionDialog::get()->on_key_press(key))
       return true;
   }
-  
+
   if(last_keyval<GDK_KEY_Shift_L || last_keyval>GDK_KEY_Hyper_R)
     previous_non_modifier_keyval=last_keyval;
   last_keyval=key->keyval;
-  
+
   //Move cursor one paragraph down
   if((key->keyval==GDK_KEY_Down || key->keyval==GDK_KEY_KP_Down) && (key->state&GDK_CONTROL_MASK)>0) {
     auto selection_start_iter=get_buffer()->get_selection_bound()->get_iter();
@@ -1410,9 +1410,9 @@ bool Source::View::on_key_press_event(GdkEventKey* key) {
     scroll_to(get_buffer()->get_insert());
     return true;
   }
-  
+
   get_buffer()->begin_user_action();
-  
+
   if(Config::get().source.smart_brackets && on_key_press_event_smart_brackets(key)) {
     get_buffer()->end_user_action();
     return true;
@@ -1421,7 +1421,7 @@ bool Source::View::on_key_press_event(GdkEventKey* key) {
     get_buffer()->end_user_action();
     return true;
   }
-  
+
   if(is_bracket_language && on_key_press_event_bracket_language(key)) {
     get_buffer()->end_user_action();
     return true;
@@ -1443,10 +1443,10 @@ bool Source::View::on_key_press_event_basic(GdkEventKey* key) {
   //Indent as in next or previous line
   if((key->keyval==GDK_KEY_Return || key->keyval==GDK_KEY_KP_Enter) && !get_buffer()->get_has_selection() && !iter.starts_line()) {
     cleanup_whitespace_characters_on_return(iter);
-    
+
     iter=get_buffer()->get_insert()->get_iter();
     auto tabs=get_line_before(get_tabs_end_iter(iter));
-    
+
     int line_nr=iter.get_line();
     if(iter.ends_line() && (line_nr+1)<get_buffer()->get_line_count()) {
       auto next_line_tabs=get_line_before(get_tabs_end_iter(line_nr+1));
@@ -1477,7 +1477,7 @@ bool Source::View::on_key_press_event_basic(GdkEventKey* key) {
       while(next_line_iter.starts_line() && next_line_iter.forward_char()) {}
       auto next_line_tabs_end_iter=get_tabs_end_iter(next_line_iter);
       auto next_line_tabs=get_line_before(next_line_tabs_end_iter);
-      
+
       std::string tabs;
       if(previous_line_tabs.size()<next_line_tabs.size())
         tabs=previous_line_tabs;
@@ -1488,7 +1488,7 @@ bool Source::View::on_key_press_event_basic(GdkEventKey* key) {
         return true;
       }
     }
-    
+
     Gtk::TextIter selection_start, selection_end;
     get_buffer()->get_selection_bounds(selection_start, selection_end);
     auto selection_end_mark=get_buffer()->create_mark(selection_end);
@@ -1508,18 +1508,18 @@ bool Source::View::on_key_press_event_basic(GdkEventKey* key) {
     get_buffer()->get_selection_bounds(selection_start, selection_end);
     int line_start=selection_start.get_line();
     int line_end=selection_end.get_line();
-    
+
     unsigned indent_left_steps=tab_size;
     std::vector<bool> ignore_line;
     for(int line_nr=line_start;line_nr<=line_end;line_nr++) {
       auto line_it = get_buffer()->get_iter_at_line(line_nr);
-      if(!get_buffer()->get_has_selection() || line_it!=selection_end) {        
+      if(!get_buffer()->get_has_selection() || line_it!=selection_end) {
         auto tabs_end_iter=get_tabs_end_iter(line_nr);
         if(tabs_end_iter.starts_line() && tabs_end_iter.ends_line())
           ignore_line.push_back(true);
         else {
           auto line_tabs=get_line_before(tabs_end_iter);
-          
+
           if(line_tabs.size()>0) {
             indent_left_steps=std::min(indent_left_steps, static_cast<unsigned>(line_tabs.size()));
             ignore_line.push_back(false);
@@ -1529,7 +1529,7 @@ bool Source::View::on_key_press_event_basic(GdkEventKey* key) {
         }
       }
     }
-    
+
     for(int line_nr=line_start;line_nr<=line_end;line_nr++) {
       Gtk::TextIter line_it = get_buffer()->get_iter_at_line(line_nr);
       Gtk::TextIter line_plus_it=line_it;
@@ -1591,7 +1591,7 @@ bool Source::View::on_key_press_event_basic(GdkEventKey* key) {
   else if((key->keyval==GDK_KEY_End || key->keyval==GDK_KEY_KP_End) && (key->state&GDK_CONTROL_MASK)==0) {
     auto end_line_iter=get_iter_at_line_end(iter.get_line());
     auto end_sentence_iter=end_line_iter;
-    while(!end_sentence_iter.starts_line() && 
+    while(!end_sentence_iter.starts_line() &&
           (*end_sentence_iter==' ' || *end_sentence_iter=='\t' || end_sentence_iter.ends_line()) &&
           end_sentence_iter.backward_char()) {}
     if(!end_sentence_iter.ends_line() && *end_sentence_iter!=' ' && *end_sentence_iter!='\t')
@@ -1614,10 +1614,10 @@ bool Source::View::on_key_press_event_basic(GdkEventKey* key) {
   else if((key->keyval==GDK_KEY_Home || key->keyval==GDK_KEY_KP_Home) && (key->state&GDK_CONTROL_MASK)==0) {
     auto start_line_iter=get_buffer()->get_iter_at_line(iter.get_line());
     auto start_sentence_iter=start_line_iter;
-    while(!start_sentence_iter.ends_line() && 
+    while(!start_sentence_iter.ends_line() &&
           (*start_sentence_iter==' ' || *start_sentence_iter=='\t') &&
           start_sentence_iter.forward_char()) {}
-    
+
     if(iter>start_sentence_iter || iter==start_line_iter) {
       if((key->state&GDK_SHIFT_MASK)>0)
         get_buffer()->move_mark_by_name("insert", start_sentence_iter);
@@ -1648,11 +1648,11 @@ bool Source::View::on_key_press_event_basic(GdkEventKey* key) {
     }
     get_buffer()->insert_at_cursor(Glib::ustring(1, unicode));
     scroll_to(get_buffer()->get_insert());
-    
+
     //Trick to make the cursor visible right after insertion:
     set_cursor_visible(false);
     set_cursor_visible();
-    
+
     return true;
   }
 
@@ -1670,7 +1670,7 @@ bool Source::View::on_key_press_event_bracket_language(GdkEventKey* key) {
     // Add * at start of line in comment blocks
     if((key->keyval==GDK_KEY_Return || key->keyval==GDK_KEY_KP_Enter) && !iter.starts_line()) {
       cleanup_whitespace_characters_on_return(iter);
-      
+
       iter=get_buffer()->get_insert()->get_iter();
       auto start_iter=get_tabs_end_iter(iter.get_line());
       auto end_iter=start_iter;
@@ -1683,7 +1683,7 @@ bool Source::View::on_key_press_event_bracket_language(GdkEventKey* key) {
           if(start_of_sentence[0]=='/')
             insert_str+=' ';
           insert_str+="* ";
-          
+
           get_buffer()->insert_at_cursor(insert_str);
           return true;
         }
@@ -1691,11 +1691,11 @@ bool Source::View::on_key_press_event_bracket_language(GdkEventKey* key) {
     }
     return false;
   }
-  
+
   //Indent depending on if/else/etc and brackets
   if((key->keyval==GDK_KEY_Return || key->keyval==GDK_KEY_KP_Enter) && !iter.starts_line()) {
     cleanup_whitespace_characters_on_return(iter);
-    
+
     iter=get_buffer()->get_insert()->get_iter();
     auto previous_iter=iter;
     previous_iter.backward_char();
@@ -1711,7 +1711,7 @@ bool Source::View::on_key_press_event_bracket_language(GdkEventKey* key) {
     else
       start_iter=get_tabs_end_iter(get_buffer()->get_iter_at_line(find_start_of_sentence(start_iter).get_line()));
     auto tabs=get_line_before(start_iter);
-    
+
     /*
      * Change tabs after ending comment block with an extra space (as in this case)
      */
@@ -1726,11 +1726,11 @@ bool Source::View::on_key_press_event_bracket_language(GdkEventKey* key) {
           tabs.pop_back();
       }
     }
-    
+
     if(*previous_iter=='{') {
       Gtk::TextIter found_iter;
       bool found_right_bracket=find_close_curly_bracket_forward(iter, found_iter);
-      
+
       bool has_right_curly_bracket=false;
       if(found_right_bracket) {
         auto tabs_end_iter=get_tabs_end_iter(found_iter);
@@ -1780,7 +1780,7 @@ bool Source::View::on_key_press_event_bracket_language(GdkEventKey* key) {
                 --para_count;
               else if(*it=='(' && is_code_iter(it))
                 ++para_count;
-              
+
               if(square_outside_para_found && square_count==0 && para_count==0) {
                 add_semicolon=true;
                 break;
@@ -1813,7 +1813,7 @@ bool Source::View::on_key_press_event_bracket_language(GdkEventKey* key) {
         return true;
       }
     }
-    
+
     //Indent multiline expressions
     if(open_non_curly_bracket_iter_found) {
       auto tabs_end_iter=get_tabs_end_iter(open_non_curly_bracket_iter);
@@ -1940,14 +1940,14 @@ bool Source::View::on_key_press_event_bracket_language(GdkEventKey* key) {
       }
     }
   }
-  
+
   return false;
 }
 
 bool Source::View::on_key_press_event_smart_brackets(GdkEventKey *key) {
   if(get_buffer()->get_has_selection())
     return false;
-  
+
   auto iter=get_buffer()->get_insert()->get_iter();
   auto previous_iter=iter;
   previous_iter.backward_char();
@@ -1988,7 +1988,7 @@ bool Source::View::on_key_press_event_smart_brackets(GdkEventKey *key) {
       }
     }
   }
-  
+
   return false;
 }
 
@@ -2070,19 +2070,19 @@ bool Source::View::on_key_press_event_smart_inserts(GdkEventKey *key) {
     }
     return false;
   }
-  
+
   auto iter=get_buffer()->get_insert()->get_iter();
   auto previous_iter=iter;
   previous_iter.backward_char();
   auto next_iter=iter;
   next_iter.forward_char();
-  
+
   auto allow_insertion=[](const Gtk::TextIter &iter) {
     if(iter.ends_line() || *iter==' ' || *iter=='\t' || *iter==';' || *iter==')' || *iter==']' || *iter=='[' || *iter=='{' || *iter=='}')
       return true;
     return false;
   };
-  
+
   // Move right when clicking ' before a ' or when clicking " before a "
   if(((key->keyval==GDK_KEY_apostrophe && *iter=='\'') ||
       (key->keyval==GDK_KEY_quotedbl && *iter=='\"')) && is_code_iter(next_iter)) {
@@ -2113,7 +2113,7 @@ bool Source::View::on_key_press_event_smart_inserts(GdkEventKey *key) {
       return true;
     }
   }
-  
+
   if(is_code_iter(iter)) {
     // Insert ()
     if(key->keyval==GDK_KEY_parenleft && allow_insertion(iter)) {
@@ -2203,7 +2203,7 @@ bool Source::View::on_key_press_event_smart_inserts(GdkEventKey *key) {
       }
     }
   }
-  
+
   return false;
 }
 
@@ -2224,7 +2224,15 @@ bool Source::View::on_button_press_event(GdkEventButton *event) {
     get_buffer()->select_range(start, end);
     return true;
   }
-  
+
+  if((event->type == GDK_BUTTON_PRESS) && (event->button == 1)){
+    if(event->state & GDK_CONTROL_MASK) {
+      hide_tooltips();
+      Menu::get().actions["source_goto_implementation"]->activate();
+      return true;
+    }
+  }
+
   if((event->type == GDK_BUTTON_PRESS) && (event->button == 3)){
     hide_tooltips();
     if(!get_buffer()->get_has_selection()){
@@ -2403,19 +2411,19 @@ std::pair<char, unsigned> Source::View::find_tab_char_and_size() {
 Source::GenericView::GenericView(const boost::filesystem::path &file_path, Glib::RefPtr<Gsv::Language> language) : View(file_path, language) {
   configure();
   spellcheck_all=true;
-  
+
   if(language)
     get_source_buffer()->set_language(language);
-  
+
   auto completion=get_completion();
   completion->property_show_headers()=false;
   completion->property_show_icons()=false;
   completion->property_accelerators()=0;
-  
+
   auto completion_words=Gsv::CompletionWords::create("", Glib::RefPtr<Gdk::Pixbuf>());
   completion_words->register_provider(get_buffer());
   completion->add_provider(completion_words);
-  
+
   if(language) {
     auto language_manager=Gsv::LanguageManager::get_default();
     auto search_paths=language_manager->get_search_path();
@@ -2473,7 +2481,7 @@ void Source::GenericView::parse_language_file(Glib::RefPtr<CompletionBuffer> &co
     try {
       parse_language_file(completion_buffer, has_context_class, node.second);
     }
-    catch(const std::exception &e) {        
+    catch(const std::exception &e) {
     }
   }
 }

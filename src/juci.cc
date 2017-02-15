@@ -5,6 +5,67 @@
 #include "menu.h"
 #include "config.h"
 
+void open_all_dependencies(const boost::filesystem::path &default_build_path) {
+
+  std::vector<std::string> file_list;
+
+  boost::filesystem::path file_name = L"depend.internal";
+  boost::filesystem::recursive_directory_iterator end_itr;
+
+  for (boost::filesystem::recursive_directory_iterator itr(default_build_path); itr != end_itr; ++itr) {
+      if (itr->path().filename() == file_name) {
+          std::string current_file = itr->path().string();
+          file_list.push_back(current_file);
+          //std::cout << current_file << std::endl;
+      }
+  }
+
+  for (auto f : file_list) {
+      //std::cout << "f: " << f << '\n';
+      std::ifstream infile(f);
+      std::string line;
+      std::string usr_include_str = " /usr/include/";
+      std::string usr_lib_str = " /usr/lib/";
+      std::string relative_path_str = " ../";
+
+      //int i = 0;
+      while (std::getline(infile, line)) {
+          if (line[0] != ' ') {
+              //std::cout << "skipping object file: " << line << '\n';
+              continue;
+          } else if (line.substr(0, usr_include_str.length()) == usr_include_str) {
+              //std::cout << "skipping /usr/include: " << line << '\n';
+              continue;
+          } else if (line.substr(0, usr_lib_str.length()) == usr_lib_str) {
+              //std::cout << "skipping /usr/lib: " << line << '\n';
+              continue;
+          }
+
+          if (line.substr(0, relative_path_str.length()) == relative_path_str) {
+              line = default_build_path.string() + line.substr(1);
+              //std::cout << i++ << ": " << line << '\n';
+          } else {
+              line = line.substr(1);
+          }
+
+          //std::cout << i++ << ": " << line;
+
+          if(boost::filesystem::exists(line)) {
+              //std::cout << " exists.\n";
+              Notebook::get().open(line, 0);
+          } else {
+              //std::cout << " NOT exists.\n";
+          }
+      }
+  }
+}
+
+bool cmd_line_build_path_set = false;
+boost::filesystem::path cmd_line_build_path;
+
+bool last_session_build_path_set = false;
+boost::filesystem::path last_session_build_path;
+
 int Application::on_command_line(const Glib::RefPtr<Gio::ApplicationCommandLine> &cmd) {
   Glib::set_prgname("juci");
   Glib::OptionContext ctx("[PATH ...]");
@@ -20,8 +81,13 @@ int Application::on_command_line(const Glib::RefPtr<Gio::ApplicationCommandLine>
         p=boost::filesystem::canonical(p);
         if(boost::filesystem::is_regular_file(p))
           files.emplace_back(p, 0);
-        else if(boost::filesystem::is_directory(p))
+        else if(boost::filesystem::is_directory(p)) {
           directories.emplace_back(p);
+          if (!cmd_line_build_path_set) {
+            cmd_line_build_path = boost::filesystem::path(p.string() + "/build/");
+            cmd_line_build_path_set = true;
+          }
+        }
       }
       else { //Open new file if parent path exists
         auto parent_p=p.parent_path();
@@ -43,9 +109,9 @@ int Application::on_command_line(const Glib::RefPtr<Gio::ApplicationCommandLine>
 void Application::on_activate() {
   add_window(Window::get());
   Window::get().show();
-  
+
   std::string last_current_file;
-  
+
   if(directories.empty() && files.empty()) {
     try {
       boost::property_tree::ptree pt;
@@ -65,12 +131,17 @@ void Application::on_activate() {
     }
     catch(const std::exception &) {}
   }
-  
+
   bool first_directory=true;
   for(auto &directory: directories) {
     if(first_directory) {
       Directories::get().open(directory);
       first_directory=false;
+
+      if (!last_session_build_path_set) {
+        last_session_build_path = boost::filesystem::path(directory.string() + "/build/");
+        last_session_build_path_set = true;
+      }
     }
     else {
       std::string files_in_directory;
@@ -89,20 +160,26 @@ void Application::on_activate() {
       another_juci_app.detach();
     }
   }
-  
+
+  if (cmd_line_build_path_set) {
+    open_all_dependencies(cmd_line_build_path);
+  } else if (last_session_build_path_set){
+    open_all_dependencies(last_session_build_path);
+  }
+
   for(auto &file: files)
     Notebook::get().open(file.first, file.second);
-  
+
   for(auto &error: errors)
     Terminal::get().print(error, true);
-  
+
   if(!last_current_file.empty())
     Notebook::get().open(last_current_file);
 }
 
 void Application::on_startup() {
   Gtk::Application::on_startup();
-  
+
   Menu::get().build();
 
   if (!Menu::get().juci_menu || !Menu::get().window_menu) {
@@ -116,7 +193,7 @@ void Application::on_startup() {
 
 Application::Application() : Gtk::Application("no.sout.juci", Gio::APPLICATION_NON_UNIQUE | Gio::APPLICATION_HANDLES_COMMAND_LINE) {
   Glib::set_application_name("juCi++");
-  
+
   //Gtk::MessageDialog without buttons caused text to be selected, this prevents that
   Gtk::Settings::get_default()->property_gtk_label_select_on_focus()=false;
 }

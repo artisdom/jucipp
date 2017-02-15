@@ -141,7 +141,9 @@ void Notebook::open(const boost::filesystem::path &file_path, size_t notebook_in
       return;
     }
   }
-  
+
+  boost::filesystem::path canonical_path = file_path;
+
   if(boost::filesystem::exists(file_path)) {
     std::ifstream can_read(file_path.string());
     if(!can_read) {
@@ -149,15 +151,17 @@ void Notebook::open(const boost::filesystem::path &file_path, size_t notebook_in
       return;
     }
     can_read.close();
+
+    canonical_path = boost::filesystem::canonical(file_path);
   }
   
   auto last_view=get_current_view();
   
-  auto language=Source::guess_language(file_path);
+  auto language=Source::guess_language(canonical_path);
   if(language && (language->get_id()=="chdr" || language->get_id()=="cpphdr" || language->get_id()=="c" || language->get_id()=="cpp" || language->get_id()=="objc"))
-    source_views.emplace_back(new Source::ClangView(file_path, language));
+    source_views.emplace_back(new Source::ClangView(canonical_path, language));
   else
-    source_views.emplace_back(new Source::GenericView(file_path, language));
+    source_views.emplace_back(new Source::GenericView(canonical_path, language));
   
   source_views.back()->scroll_to_cursor_delayed=[this](Source::View* view, bool center, bool show_tooltips) {
     while(Gtk::Main::events_pending())
