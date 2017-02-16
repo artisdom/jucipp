@@ -46,6 +46,8 @@ public:
   void next();
   void previous();
   void toggle_split();
+  /// Hide/Show tabs.		
+  void toggle_tabs();
   boost::filesystem::path get_current_folder();
 
   Gtk::Label status_location;

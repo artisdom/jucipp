@@ -608,6 +608,11 @@ void Notebook::toggle_split() {
   }
   split=!split;
 }
+void Notebook::toggle_tabs() {
+  //Show / Hide tabs for each notebook.
+  for(auto &notebook : Notebook::notebooks)
+    notebook.set_show_tabs(!notebook.get_show_tabs());
+}
 
 boost::filesystem::path Notebook::get_current_folder() {
   if(!Directories::get().path.empty())

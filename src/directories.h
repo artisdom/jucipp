@@ -91,6 +91,7 @@ private:
   Gtk::Menu menu_root;
   Gtk::MenuItem menu_root_item_new_file;
   Gtk::MenuItem menu_root_item_new_folder;
+  Gtk::MenuItem menu_item_open_all_files;
   boost::filesystem::path menu_popup_row_path;
 };
 

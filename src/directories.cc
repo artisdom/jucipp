@@ -162,6 +162,37 @@ Directories::Directories() : Gtk::ListViewText(1) {
   
   enable_model_drag_source();
   enable_model_drag_dest();
+
+
+  auto open_all_files_label = "Open All Files";
+  auto open_all_files_function = [this] {
+    
+    if(menu_popup_row_path.empty())
+      return;
+    
+    auto source_path=std::make_shared<boost::filesystem::path>(menu_popup_row_path);
+    
+    bool is_directory=boost::filesystem::is_directory(*source_path);
+    auto target_path = is_directory ? *source_path : source_path->parent_path();
+    
+    boost::filesystem::recursive_directory_iterator itr(target_path), end_itr;
+    
+    for (; itr != end_itr; ++itr)
+    {
+        // If it's not a directory, list it. If you want to list directories too, just remove this check.
+        if (is_regular_file(itr->path())) {
+            // assign current file name to current_file and echo it out to the console.
+            std::string current_file = itr->path().string();
+            std::cout << current_file << std::endl;
+            Notebook::get().open(itr->path(), -1);
+        }
+    }
+
+  };
+  
+  menu_item_open_all_files.set_label(open_all_files_label);
+  menu_item_open_all_files.signal_activate().connect(open_all_files_function);
+  menu.append(menu_item_open_all_files);
   
   auto new_file_label = "New File";
   auto new_file_function = [this] {
@@ -205,7 +236,7 @@ Directories::Directories() : Gtk::ListViewText(1) {
   menu_root_item_new_file.set_label(new_file_label);
   menu_root_item_new_file.signal_activate().connect(new_file_function);
   menu_root.append(menu_root_item_new_file);
-  
+
   auto new_folder_label = "New Folder";
   auto new_folder_function = [this] {
     if(menu_popup_row_path.empty())
