@@ -161,11 +161,13 @@ void Application::on_activate() {
     }
   }
 
+/*
   if (cmd_line_build_path_set) {
     open_all_dependencies(cmd_line_build_path);
   } else if (last_session_build_path_set){
     open_all_dependencies(last_session_build_path);
   }
+*/
 
   for(auto &file: files)
     Notebook::get().open(file.first, file.second);
