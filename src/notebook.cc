@@ -130,29 +130,29 @@ std::vector<Source::View*> &Notebook::get_views() {
 }
 
 void Notebook::open(const boost::filesystem::path &file_path, size_t notebook_index) {
+  boost::filesystem::path canonical_path = file_path;
+  if(boost::filesystem::exists(file_path))
+    canonical_path=boost::filesystem::canonical(file_path);
+
   if(notebook_index==1 && !split)
     toggle_split();
   
   for(size_t c=0;c<size();c++) {
-    if(file_path==source_views[c]->file_path) {
+    if(canonical_path==source_views[c]->file_path) {
       auto notebook_page=get_notebook_page(c);
       notebooks[notebook_page.first].set_current_page(notebook_page.second);
       focus_view(source_views[c]);
       return;
     }
   }
-
-  boost::filesystem::path canonical_path = file_path;
   
-  if(boost::filesystem::exists(file_path)) {
-    std::ifstream can_read(file_path.string());
+  if(boost::filesystem::exists(canonical_path)) {
+    std::ifstream can_read(canonical_path.string());
     if(!can_read) {
-      Terminal::get().print("Error: could not open "+file_path.string()+"\n", true);
+      Terminal::get().print("Error: could not open "+canonical_path.string()+"\n", true);
       return;
     }
     can_read.close();
-
-    canonical_path = boost::filesystem::canonical(file_path);
   }
   
   auto last_view=get_current_view();
@@ -296,7 +296,7 @@ void Notebook::open(const boost::filesystem::path &file_path, size_t notebook_in
   
   //Set up tab label
   auto source_view=source_views.back();
-  tab_labels.emplace_back(new TabLabel(file_path, [this, source_view]() {
+  tab_labels.emplace_back(new TabLabel(canonical_path, [this, source_view]() {
     auto index=get_index(source_view);
     if(index!=static_cast<size_t>(-1))
       close(index);
