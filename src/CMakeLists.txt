@@ -7,6 +7,7 @@ set(project_files
     dialogs.cc
     dialogs_unix.cc
     directories.cc
+    methods.cc
     entrybox.cc
     info.cc
     juci.cc

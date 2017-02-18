@@ -3,6 +3,7 @@
 #include "menu.h"
 #include "notebook.h"
 #include "directories.h"
+#include "methods.h"
 #include "dialogs.h"
 #include "filesystem.h"
 #include "project.h"
@@ -41,6 +42,14 @@ Window::Window() {
   auto directories_scrolled_window=Gtk::manage(new Gtk::ScrolledWindow());
   directories_scrolled_window->add(Directories::get());
   
+  auto methods_scrolled_window=Gtk::manage(new Gtk::ScrolledWindow());
+  methods_scrolled_window->add(Methods::get());
+  
+  auto directories_and_symbols_vpaned=Gtk::manage(new Gtk::Paned(Gtk::Orientation::ORIENTATION_VERTICAL));
+  directories_and_symbols_vpaned->set_position(static_cast<int>(0.5*Config::get().window.default_size.second));
+  directories_and_symbols_vpaned->pack1(*directories_scrolled_window, Gtk::SHRINK);
+  directories_and_symbols_vpaned->pack2(*methods_scrolled_window, Gtk::SHRINK);
+  
   auto notebook_vbox=Gtk::manage(new Gtk::Box(Gtk::Orientation::ORIENTATION_VERTICAL));
   notebook_vbox->pack_start(Notebook::get());
   notebook_vbox->pack_end(EntryBox::get(), Gtk::PACK_SHRINK);
@@ -55,7 +64,7 @@ Window::Window() {
   
   auto hpaned=Gtk::manage(new Gtk::Paned());
   hpaned->set_position(static_cast<int>(0.2*Config::get().window.default_size.first));
-  hpaned->pack1(*directories_scrolled_window, Gtk::SHRINK);
+  hpaned->pack1(*directories_and_symbols_vpaned, Gtk::SHRINK);
   hpaned->pack2(*notebook_and_terminal_vpaned, Gtk::SHRINK);
   
   auto status_hbox=Gtk::manage(new Gtk::Box());
@@ -140,6 +149,7 @@ Window::Window() {
     else if(view->soft_reparse_needed)
       view->soft_reparse();
     
+    Methods::get().update();
     Notebook::get().update_status(view);
     
 #ifdef JUCI_ENABLE_DEBUG
