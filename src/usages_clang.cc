@@ -8,7 +8,7 @@
 #include <regex>
 #include <thread>
 
-// #include <iostream> //TODO: remove
+#include <iostream> //TODO: remove
 
 const boost::filesystem::path Usages::Clang::cache_folder = ".usages_clang";
 std::map<boost::filesystem::path, Usages::Clang::Cache> Usages::Clang::caches;
@@ -104,9 +104,102 @@ std::vector<std::pair<clangmm::Offset, clangmm::Offset>> Usages::Clang::Cache::g
   return offsets;
 }
 
+void Usages::Clang::cache_all_files(const boost::filesystem::path &project_path, const boost::filesystem::path &build_path, const boost::filesystem::path &debug_path)
+{
+  auto all_paths = find_paths(project_path, build_path, debug_path);
+
+  for(auto it = all_paths.begin(); it != all_paths.end(); ++it) {
+    std::cout << *it << std::endl;
+    //std::cout << "parsing: " << path << std::endl;
+  }
+
+  if(!all_paths.empty()) {
+
+      std::vector<std::thread> threads;
+      auto it = all_paths.begin();
+
+      auto number_of_threads = Config::get().source.clang_usages_threads;
+      if(number_of_threads == static_cast<unsigned>(-1)) {
+          number_of_threads = std::thread::hardware_concurrency();
+          if(number_of_threads == 0)
+              number_of_threads = 1;
+      }
+
+      for(unsigned thread_id = 0; thread_id < number_of_threads; ++thread_id) {
+          threads.emplace_back(
+              [&all_paths, &it, &build_path, &project_path] {
+
+                  while(true) {
+                      boost::filesystem::path path;
+                      {
+                          static std::mutex mutex;
+                          std::unique_lock<std::mutex> lock(mutex);
+                          if(it == all_paths.end())
+                              return;
+                          path = *it;
+                          ++it;
+                      }
+
+                      clangmm::Index index(0, 0);
+
+                      {
+                          static std::mutex mutex;
+                          std::unique_lock<std::mutex> lock(mutex);
+                          std::cout << "parsing: " << path << std::endl;
+                      }
+
+                      std::ifstream stream(path.string(), std::ifstream::binary);
+                      std::string buffer;
+                      buffer.assign(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
+
+                      auto arguments = CompileCommands::get_arguments(build_path, path);
+                      arguments.emplace_back("-w"); // Disable all warnings
+                      for(auto it = arguments.begin(); it != arguments.end();) { // remove comments from system headers
+                          if(*it == "-fretain-comments-from-system-headers")
+                              it = arguments.erase(it);
+                          else
+                              ++it;
+                      }
+                      int flags = CXTranslationUnit_Incomplete;
+#if CINDEX_VERSION_MAJOR > 0 || (CINDEX_VERSION_MAJOR == 0 && CINDEX_VERSION_MINOR >= 35)
+                      flags |= CXTranslationUnit_KeepGoing;
+#endif
+
+                      auto before_parse_time=std::time(nullptr);
+
+                      clangmm::TranslationUnit translation_unit(index, path.string(), arguments, buffer, flags);
+
+                      //clangmm::Tokens* clang_tokens = translation_unit.get_tokens();
+                      std::unique_ptr<clangmm::Tokens> clang_tokens = translation_unit.get_tokens();
+
+                      {
+                          static std::mutex mutex;
+                          std::unique_lock<std::mutex> lock(mutex);
+                          write_cache(path, Cache(project_path, build_path, path, before_parse_time, &translation_unit, clang_tokens.get()));
+                          //add_usages(project_path, build_path, path, usages, visited, spelling, cursor, &translation_unit, true);
+                          //add_usages_from_includes(project_path, build_path, usages, visited, spelling, cursor, &translation_unit, true);
+                      }
+                  }
+              }
+              );
+      }
+
+      for(auto &thread : threads)
+          thread.join();
+  }
+}
+
 std::vector<Usages::Clang::Usages> Usages::Clang::get_usages(const boost::filesystem::path &project_path, const boost::filesystem::path &build_path, const boost::filesystem::path &debug_path,
                                                              const std::string &spelling, const clangmm::Cursor &cursor, const std::vector<clangmm::TranslationUnit *> &translation_units) {
   std::vector<Usages> usages;
+
+  static bool once = false;
+
+  if (!once) {
+      cache_all_files(project_path, build_path, debug_path);
+      std::cout << "spelling: " << spelling << std::endl;
+      once = true;
+  }
 
   if(spelling.empty())
     return usages;

@@ -109,6 +109,9 @@ namespace Usages {
     static std::atomic<size_t> cache_in_progress_count;
 
   public:
+ 
+    static void cache_all_files(const boost::filesystem::path &project_path, const boost::filesystem::path &build_path, const boost::filesystem::path &debug_path);
+
     static std::vector<Usages> get_usages(const boost::filesystem::path &project_path, const boost::filesystem::path &build_path, const boost::filesystem::path &debug_path,
                                           const std::string &spelling, const clangmm::Cursor &cursor, const std::vector<clangmm::TranslationUnit *> &translation_units);
 
