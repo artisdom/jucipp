@@ -134,6 +134,9 @@ namespace Usages {
                                          std::vector<Usages> &usages, PathSet &visited, const std::string &spelling, const clangmm::Cursor &cursor,
                                          clangmm::TranslationUnit *translation_unit, bool store_in_cache);
 
+    static PathSet find_paths2(const boost::filesystem::path &project_path,
+                               const boost::filesystem::path &build_path, const boost::filesystem::path &debug_path);
+
     static PathSet find_paths(const boost::filesystem::path &project_path,
                               const boost::filesystem::path &build_path, const boost::filesystem::path &debug_path);
 

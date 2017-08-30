@@ -106,7 +106,7 @@ std::vector<std::pair<clangmm::Offset, clangmm::Offset>> Usages::Clang::Cache::g
 
 void Usages::Clang::cache_all_files(const boost::filesystem::path &project_path, const boost::filesystem::path &build_path, const boost::filesystem::path &debug_path)
 {
-  auto all_paths = find_paths(project_path, build_path, debug_path);
+  auto all_paths = find_paths2(project_path, build_path, debug_path);
 
   for(auto it = all_paths.begin(); it != all_paths.end(); ++it) {
     std::cout << *it << std::endl;
@@ -222,7 +222,7 @@ std::vector<Usages::Clang::Usages> Usages::Clang::get_usages(const boost::filesy
   if(project_path.empty())
     return usages;
 
-  auto paths = find_paths(project_path, build_path, debug_path);
+  auto paths = find_paths2(project_path, build_path, debug_path);
   auto pair = parse_paths(spelling, paths);
   auto pair2 = find_potential_paths(cursor.get_canonical().get_source_location().get_path(), project_path, pair.first, pair.second);
   auto &potential_paths = pair2.first;
@@ -594,6 +594,19 @@ void Usages::Clang::add_usages_from_includes(const boost::filesystem::path &proj
 
   for(auto &path : visitor_data.paths)
     add_usages(project_path, build_path, path, usages, visited, spelling, cursor, translation_unit, store_in_cache);
+}
+
+Usages::Clang::PathSet Usages::Clang::find_paths2(const boost::filesystem::path &project_path,
+                                                 const boost::filesystem::path &build_path, const boost::filesystem::path &debug_path) {
+  PathSet paths;
+
+  CompileCommands compile_commands(build_path);
+
+  for(auto &command : compile_commands.commands) {
+    paths.emplace(filesystem::get_normal_path(command.file));
+  }
+
+  return paths;
 }
 
 Usages::Clang::PathSet Usages::Clang::find_paths(const boost::filesystem::path &project_path,
